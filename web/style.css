@@ -7,6 +7,8 @@ a:focus-visible{outline:2px solid var(--accent);outline-offset:5px}
 .wrap{width:min(1232px,calc(100% - 112px));margin-inline:auto}
 .top{border-bottom:1px solid var(--line);background:var(--bg)}
 .nav,.footer-inner{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.site-credit{display:block;flex:none}
+.site-credit img{display:block;width:clamp(132px,18vw,184px);height:auto;mix-blend-mode:lighten}
 .nav{height:82px}
 .brand{display:inline-flex;flex-direction:column;align-items:flex-start;line-height:.78;width:max-content}
 .brand strong{font:800 43px/.8 var(--display);letter-spacing:-.045em}

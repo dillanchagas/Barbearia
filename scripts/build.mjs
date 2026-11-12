@@ -6,7 +6,8 @@ const files = [
   ["/style.css", "text/css; charset=utf-8", "web/style.css"],
   ["/booking.js", "text/javascript; charset=utf-8", "worker/booking.js"],
   ["/staff.js", "text/javascript; charset=utf-8", "worker/staff.js"],
-  ["/pek-logo.png", "image/png", "web/pek-logo.png"]
+  ["/pek-logo.png", "image/png", "web/pek-logo.png"],
+  ["/jc-web-solutions.png", "image/png", "web/jc-web-solutions.png"]
 ];
 const assetEntries = await Promise.all(files.map(async ([path, type, source]) => {
   const data = await readFile(source);
