@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-PT">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agenda · PEK Barbeiro</title><link rel="stylesheet" href="/style.css"></head>
+<body><header class="top"><div class="wrap nav"><a href="/" class="brand"><strong>PEK</strong><small>BARBEIRO</small></a><a href="/">Voltar ao site ↗</a></div></header>
+<main class="wrap section agenda">
+  <p class="eyebrow">Área da equipa</p><h1>Agenda</h1>
+  <p id="agenda-status" role="status">A abrir a agenda…</p>
+  <form id="team-login" class="team-box" hidden>
+    <h3>Entrar</h3>
+    <label>Utilizador <input name="username" autocomplete="username" required maxlength="32"></label>
+    <label>Palavra-passe <input name="password" type="password" autocomplete="current-password" required maxlength="128"></label>
+    <button class="button" type="submit">Entrar ↗</button>
+  </form>
+  <form id="team-setup" class="team-box" hidden>
+    <h3>Criar conta de desenvolvimento</h3>
+    <p>Configuração inicial reservada ao proprietário do site.</p>
+    <label>Utilizador <input name="username" autocomplete="username" required minlength="3" maxlength="32" pattern="[a-zA-Z0-9][a-zA-Z0-9._\-]{2,31}"></label>
+    <label>Palavra-passe <input name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="128"></label>
+    <button class="button" type="submit">Criar conta dev ↗</button>
+  </form>
+  <div id="team-session" class="team-session" hidden><strong id="team-user"></strong>
+    <button class="choice" id="team-logout" type="button">Sair</button></div>
+  <div id="agenda-panel" hidden>
+    <div class="agenda-filters"><label>Barbeiro <select id="agenda-barber"></select></label>
+    <label>Dia <input id="agenda-date" type="date"></label></div>
+    <p id="email-state"></p>
+    <div id="agenda-entries"></div>
+    <div class="agenda-tools" id="agenda-tools" hidden>
+      <form id="block-form"><h3>Bloquear período</h3><p>Bloqueia horas na data escolhida acima.</p>
+        <div class="agenda-filters"><label>Início <input name="start" type="time" step="900" required></label>
+        <label>Fim <input name="end" type="time" step="900" required></label></div>
+        <button class="button" type="submit">Bloquear</button>
+      </form>
+      <form id="hours-form"><h3>Horário semanal</h3>
+        <label>Dia da semana <select id="weekday"></select></label>
+        <p>Deixa os dois períodos vazios para fechar esse dia.</p>
+        <div class="agenda-filters"><label>Início <input name="a" type="time" step="900"></label><label>Fim <input name="b" type="time" step="900"></label></div>
+        <div class="agenda-filters"><label>Início <input name="c" type="time" step="900"></label><label>Fim <input name="d" type="time" step="900"></label></div>
+        <button class="button" type="submit">Guardar horário</button>
+      </form>
+    </div>
+  </div>
+  <section id="team-management" class="team-management" hidden>
+    <h2>Contas da equipa</h2>
+    <p id="accounts-status" role="status"></p>
+    <div id="accounts-list"></div>
+    <form id="accounts-form" class="team-box">
+      <h3 id="accounts-title">Criar conta</h3>
+      <label>Perfil <select name="role" id="account-role"></select></label>
+      <label id="account-barber-label">Barbeiro <select name="barber" id="account-barber"></select></label>
+      <label>Utilizador <input name="username" autocomplete="off" required minlength="3" maxlength="32" pattern="[a-zA-Z0-9][a-zA-Z0-9._\-]{2,31}"></label>
+      <label>Palavra-passe <input name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="128"></label>
+      <button class="button" id="account-save" type="submit">Criar conta</button>
+      <button class="choice" id="account-reset-back" type="button" hidden>Voltar</button>
+    </form>
+  </section>
+</main><script type="module" src="/staff.js"></script></body>
+</html>

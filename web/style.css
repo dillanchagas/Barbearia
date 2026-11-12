@@ -1,0 +1,105 @@
+:root{color-scheme:dark;--bg:#0c0b09;--ink:#fffaf0;--muted:#c4b9a8;--gold:#d6a553;--accent:#ebc680;--line:#382e22;--display:"Barlow Condensed","Arial Narrow",Impact,sans-serif}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:500 16px/1.6 "DM Sans",Arial,sans-serif}
+a{color:inherit;text-decoration:none}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:5px}
+.wrap{width:min(1232px,calc(100% - 112px));margin-inline:auto}
+.top{border-bottom:1px solid var(--line);background:var(--bg)}
+.nav,.footer-inner{display:flex;align-items:center;justify-content:space-between;gap:24px}
+.nav{height:82px}
+.brand{display:inline-flex;flex-direction:column;align-items:flex-start;line-height:.78;width:max-content}
+.brand strong{font:800 43px/.8 var(--display);letter-spacing:-.045em}
+.brand small{font-weight:800;font-size:8px;letter-spacing:.29em;margin-top:8px}
+nav{display:flex;gap:34px;color:#e7ded0;font-size:.86rem}
+nav a:hover,.plain:hover,footer a:hover{color:var(--accent)}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:22px;min-height:55px;padding:12px 24px;background:var(--gold);color:#181007;font-weight:700;white-space:nowrap}
+.button:hover{background:#edbf72}
+.button.small{min-height:44px;padding:8px 16px;font-size:.85rem;gap:14px}
+.button span{font-size:1.15em}
+.hero{display:grid;align-items:center;min-height:565px;background:radial-gradient(ellipse at 75% 42%,#21180f,var(--bg) 65%)}
+.hero-inner{display:grid;grid-template-columns:.94fr 1.06fr;align-items:center;gap:clamp(28px,5vw,72px);padding-block:60px}.hero-image{display:block;width:100%;height:auto;max-width:440px;margin-inline:auto;filter:drop-shadow(0 12px 30px #0009)}
+.eyebrow{display:flex;align-items:center;gap:10px;margin:0 0 15px;color:var(--accent);font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;font-weight:700}
+.eyebrow span{display:inline-block;width:20px;height:2px;background:currentColor}
+h1,h2,h3{font-family:var(--display);line-height:.9;text-transform:uppercase;margin:0;font-weight:800}
+h1{font-size:clamp(4.25rem,7.6vw,8rem);letter-spacing:-.025em}
+h1 em{font-style:normal;color:var(--accent)}
+.intro{max-width:355px;margin:24px 0 26px;color:#ded2bf}
+.actions{display:flex;align-items:center;gap:26px;flex-wrap:wrap}
+.plain{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:.9rem}
+.section{padding-block:74px}
+.section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:32px}
+h2{font-size:clamp(3.3rem,6.2vw,6rem);letter-spacing:-.015em}
+.menu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+article{background:#171410;border:1px solid var(--line);padding:24px}
+h3{font-size:2rem;margin-bottom:19px}
+dl{margin:0}
+dl div{display:flex;justify-content:space-between;align-items:baseline;gap:12px;border-top:1px solid var(--line);padding:11px 0;font-size:.91rem}
+dt{color:#f0e6d7}
+dd{color:var(--accent);font-weight:700;margin:0;white-space:nowrap}
+.booking{background:var(--gold);color:#1d150c}
+.booking-inner,.visit{display:flex;align-items:center;justify-content:space-between;gap:32px}
+.booking-inner{padding-block:65px}
+.booking .eyebrow{color:#281a0b}
+.booking p:last-child{max-width:500px;margin:17px 0 0}
+.button.light{background:#1d150c;color:var(--ink)}
+.button.light:hover{background:#3a2a16}
+address{font-style:normal;color:var(--muted);margin-top:18px}
+.contact{display:grid;gap:10px}
+footer{border-top:1px solid var(--line);padding-block:26px;color:var(--muted);font-size:.82rem}
+footer .brand{color:var(--ink)}
+@media(max-width:850px){.wrap{width:calc(100% - 56px)}.menu{grid-template-columns:repeat(2,minmax(0,1fr))}nav{gap:16px}.hero{min-height:0}}
+@media(max-width:700px){.wrap{width:calc(100% - 36px)}.nav{height:65px}nav{display:none}.hero-inner{grid-template-columns:1fr;gap:30px;padding-block:26px 42px}.hero-image{grid-row:1;width:min(76%,290px)}h1{font-size:clamp(4.55rem,17.5vw,6rem)}.intro{margin-block:16px 21px}.section{padding-block:49px}.section-heading,.booking-inner,.visit{align-items:flex-start;flex-direction:column}.section-heading{gap:14px;margin-bottom:22px}.menu{grid-template-columns:1fr}.booking-inner{padding-block:48px;gap:23px}.footer-inner{flex-wrap:wrap;gap:18px}.footer-inner>span{display:none}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+.hero{display:grid;align-items:center;min-height:565px;background:radial-gradient(ellipse at 75% 42%,#21180f,var(--bg) 65%)}
+.extras{margin-top:20px}
+.extras summary{width:max-content;max-width:100%;font-weight:700;cursor:pointer;color:var(--accent)}
+.extras summary:focus-visible{outline:2px solid var(--accent);outline-offset:5px}
+.extras dl{margin-top:14px;max-width:620px}
+.booking{background:#17120d;color:var(--ink);border-block:1px solid #6b4e2b}
+.booking-inner{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);align-items:start;gap:clamp(22px,5vw,68px)}
+.booking .eyebrow{color:var(--accent)}
+.booking-panel,.agenda-tools form{background:var(--bg);border:1px solid var(--line);padding:clamp(16px,3vw,30px);min-width:0}
+.booking-panel p{overflow-wrap:anywhere}
+#booking-status:empty{display:none}
+#booking-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:0;margin:0 0 24px;list-style:none;color:var(--muted);font-size:.78rem}
+#booking-steps li{padding:0 0 7px;border-bottom:2px solid var(--line)}
+#booking-steps [aria-current]{color:var(--accent);border-color:var(--gold);font-weight:700}
+fieldset{margin:0;padding:0;border:0;min-inline-size:0}
+legend{font:700 1.95rem/1 var(--display);margin-bottom:15px}
+input,select{display:block;width:100%;min-width:0;background:#1b1713;color:var(--ink);border:1px solid #59452e;padding:10px 12px;font:inherit;margin:5px 0 14px}
+button{font:inherit;cursor:pointer}
+button:disabled{opacity:.43;cursor:default}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.booking-panel label,.agenda label{display:block;font-size:.86rem;font-weight:700}
+.choice,.text-button{color:var(--ink);background:transparent;border:1px solid #59452e;padding:8px 12px}
+.choice:hover:not(:disabled),.choice[aria-pressed=true]{border-color:var(--gold);color:var(--accent);background:#2c2013}
+.text-button{display:block;border:0;padding:10px 0;margin-top:8px;color:var(--accent);font-size:.87rem}
+.choice-list{display:grid;gap:8px}.choice-list button{text-align:left}
+.calendar-nav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.calendar-nav strong{text-transform:capitalize}
+.calendar{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.calendar .choice{padding:5px 0;min-height:35px}
+.calendar span{color:var(--muted);font-size:.72rem}
+.time-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:5px}
+.form-note{font-size:.84rem;color:var(--muted)}
+.menu a:hover,.extras a:hover{color:var(--accent);text-decoration:underline}
+.menu a,.extras a{text-decoration:underline;text-underline-offset:3px;text-decoration-color:#836a49}
+.agenda-filters,.agenda-tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.agenda-tools{margin-top:24px}.agenda-tools h3{margin-bottom:14px}
+#agenda-entries article{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-top:8px}
+#agenda-entries article p{margin:4px 0;overflow-wrap:anywhere}
+.agenda-actions{display:flex;flex-wrap:wrap;gap:5px}
+#receipt-reference{font-size:.78rem;color:var(--muted)}
+@media(max-width:850px){.booking-inner,.agenda-tools{grid-template-columns:1fr}}
+@media(max-width:520px){#agenda-entries article{display:block}.agenda-actions{margin-top:8px}}
+[hidden]{display:none!important}
+.team-box{max-width:500px;padding:24px;border:1px solid var(--line);background:#171410}
+.team-box h3{margin-bottom:16px}
+.team-session{display:flex;align-items:center;justify-content:space-between;gap:16px;border-block:1px solid var(--line);padding:12px 0;margin-bottom:18px}
+.team-management{margin-top:48px}
+.team-management h2{font-size:clamp(2.7rem,5vw,4rem)}
+.team-account{display:flex;align-items:center;flex-wrap:wrap;gap:8px 16px;margin-bottom:8px}
+.team-account span{color:var(--muted)}
+.team-account .agenda-actions{margin-left:auto}
+.team-management .team-box{margin-top:18px}
