@@ -10,8 +10,14 @@ const dayPattern = /^\d{4}-\d{2}-\d{2}$/;
 const idPattern = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i;
 const barberById = new Map(barbers.map(x => [x.id, x]));
 const serviceById = new Map(services.map(x => [x.id, x]));
+const securityHeaders = {
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "no-referrer",
+  "X-Frame-Options": "DENY",
+  "Content-Security-Policy": "default-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+};
 const json = (value, status = 200) => Response.json(value, {
-  status, headers: { "Cache-Control": "no-store" }
+  status, headers: { ...securityHeaders, "Cache-Control": "no-store" }
 });
 const fail = (message, status = 400) => json({ error: message }, status);
 const query = (db, sql, ...args) => db.prepare(sql).bind(...args);
@@ -195,11 +201,15 @@ export default {
     const url = new URL(request.url);
     const { pathname } = url;
     const { method } = request;
-    const headers = { "X-Content-Type-Options": "nosniff", "Referrer-Policy": "same-origin" };
     if (pathname in assets && (method === "GET" || method === "HEAD")) {
       const [contentType, body] = assets[pathname];
+      const headers = { ...securityHeaders, "Content-Type": contentType, "Cache-Control": "no-cache" };
+      if (pathname === "/equipa") {
+        headers["Cache-Control"] = "no-store";
+        headers["X-Robots-Tag"] = "noindex, nofollow";
+      }
       return new Response(method === "HEAD" ? null : body, {
-        headers: { ...headers, "Content-Type": contentType, "Cache-Control": "no-cache" }
+        headers
       });
     }
     if (!pathname.startsWith("/api/")) return new Response("Página indisponível.", { status: 404 });
@@ -218,7 +228,7 @@ export default {
       return fail("Página indisponível.", 404);
     } catch (error) {
       if (error instanceof SyntaxError) return fail("Pedido inválido.");
-      console.error(error.name, String(error.message).slice(0,180));
+      console.error("Agenda request failed", method, error.name);
       return fail("A agenda está temporariamente indisponível. Tenta novamente.", 503);
     }
   }
