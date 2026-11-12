@@ -25,6 +25,7 @@ nav a:hover,.plain:hover,footer a:hover{color:var(--accent)}
 .eyebrow span{display:inline-block;width:20px;height:2px;background:currentColor}
 h1,h2,h3{font-family:var(--display);line-height:.9;text-transform:uppercase;margin:0;font-weight:800}
 h1{font-size:clamp(4.25rem,7.6vw,8rem);letter-spacing:-.025em}
+.hero h1{font-size:clamp(2.5rem,5.35vw,5.25rem);overflow-wrap:anywhere}
 h1 em{font-style:normal;color:var(--accent)}
 .intro{max-width:355px;margin:24px 0 26px;color:#ded2bf}
 .actions{display:flex;align-items:center;gap:26px;flex-wrap:wrap}
