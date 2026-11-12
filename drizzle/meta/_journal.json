@@ -1,1 +1,1 @@
-{"version":"7","dialect":"sqlite","entries":[{"idx":0,"version":"6","when":1794506400000,"tag":"0000_agenda","breakpoints":true},{"idx":1,"version":"6","when":1794506401000,"tag":"0001_team","breakpoints":true}]}
+{"version":"7","dialect":"sqlite","entries":[{"idx":0,"version":"6","when":1794506400000,"tag":"0000_agenda","breakpoints":true},{"idx":1,"version":"6","when":1794506401000,"tag":"0001_team","breakpoints":true},{"idx":2,"version":"6","when":1794506402000,"tag":"0002_team_access","breakpoints":true}]}

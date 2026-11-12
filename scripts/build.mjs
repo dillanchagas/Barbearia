@@ -18,8 +18,9 @@ const assetEntries = await Promise.all(files.map(async ([path, type, source]) =>
 }));
 const catalog = await readFile("worker/catalog.js", "utf8");
 const team = await readFile("worker/team.js", "utf8");
+const teamMfa = await readFile("worker/team-mfa.js", "utf8");
 const worker = await readFile("worker/index.js", "utf8");
 await mkdir("dist/server", { recursive: true });
 await writeFile("dist/server/index.js",
   "const assets = {" + assetEntries.join(",\n") + "};\n" +
-  catalog + "\n" + team + "\n" + worker.replace(/^import .*;\r?\n/gm, ""));
+  catalog + "\n" + team + "\n" + teamMfa + "\n" + worker.replace(/^import .*;\r?\n/gm, ""));

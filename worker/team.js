@@ -24,7 +24,8 @@ async function sessionAccount(request,db) {
   const token=tokenFrom(request);
   if(!token) return null;
   return query(db,`SELECT a.id,a.username,a.role,a.barber FROM team_accounts a
-    JOIN team_sessions s ON s.account=a.id WHERE s.token_hash=? AND s.expires>?`,
+    JOIN team_sessions s ON s.account=a.id WHERE s.token_hash=? AND s.expires>?
+    AND a.invite_hash IS NULL AND (a.role='barber' OR s.mfa_verified=1)`,
     await digest(token),epoch()).first();
 }
 
@@ -34,16 +35,18 @@ function teamResponse(value,cookie,status=200) {
   return response;
 }
 
-async function startTeamSession(db, account) {
+async function startTeamSession(db, account, mfaVerified=false, recoveryCode=null) {
   const token=random(32);
   const [, insertion]=await db.batch([
     query(db,"DELETE FROM team_sessions WHERE expires <= ?",epoch()),
-    query(db,`INSERT INTO team_sessions SELECT ?,id,? FROM team_accounts
-      WHERE id=? AND (? IS NULL OR password_hash=?) RETURNING account`,
-      await digest(token),epoch()+sessionSeconds,account.id,account.password_hash??null,account.password_hash??null)
+    query(db,`INSERT INTO team_sessions (token_hash,account,expires,mfa_verified)
+      SELECT ?,id,?,? FROM team_accounts
+      WHERE id=? AND password_hash=? AND invite_hash IS NULL AND (role='barber' OR ?=1)
+      RETURNING account`,
+      await digest(token),epoch()+sessionSeconds,Number(mfaVerified),account.id,account.password_hash,Number(mfaVerified))
   ]);
   if(!insertion.results.length) return fail("Utilizador ou palavra-passe inválidos.",401);
-  return teamResponse({account:accountView(account)},makeCookie(token,sessionSeconds));
+  return teamResponse({account:accountView(account),recoveryCode},makeCookie(token,sessionSeconds));
 }
 
 function credentials(body) {
@@ -63,11 +66,16 @@ async function setupAllowed(request,env) {
 async function createTeamAccount(db, data, role, barber=null) {
   const salt=random(24);
   return query(db,`INSERT INTO team_accounts (id,username,role,barber,salt,password_hash)
-    VALUES (?,?,?,?,?,?) ON CONFLICT DO NOTHING RETURNING id,username,role,barber`,
+    VALUES (?,?,?,?,?,?) ON CONFLICT DO NOTHING RETURNING id,username,role,barber,password_hash`,
     crypto.randomUUID(),data.username,role,barber,salt,await passwordHash(data.password,salt)).first();
 }
 
-async function attemptLogin(request,db,data) {
+function enterTeam(env,account) {
+  return account.role==="barber" ? startTeamSession(env.DB,account) : beginTeamMfa(env,account);
+}
+
+async function attemptLogin(request,env,data) {
+  const db=env.DB;
   if(!data) return fail("Utilizador ou palavra-passe inválidos.",401);
   const ip=request.headers.get("cf-connecting-ip")||"unknown";
   const now=epoch();
@@ -79,14 +87,56 @@ async function attemptLogin(request,db,data) {
   if(limits[0].results[0].attempts>40||limits[1].results[0].attempts>10) return fail("Demasiadas tentativas. Tenta novamente mais tarde.",429);
   const account=await query(db,"SELECT * FROM team_accounts WHERE username=?",data.username).first();
   const calculated=await passwordHash(data.password,account?.salt||"0".repeat(48));
-  if(!equalHash(calculated,account?.password_hash||"0".repeat(64))||!account) {
+  if(!equalHash(calculated,account?.password_hash||"0".repeat(64))||!account||account.invite_hash) {
     return fail("Utilizador ou palavra-passe inválidos.",401);
   }
   await db.batch([
     query(db,"DELETE FROM team_attempts WHERE expires <= ?",now),
     query(db,"DELETE FROM team_attempts WHERE id=?",keys[1])
   ]);
-  return startTeamSession(db,account);
+  return enterTeam(env,account);
+}
+
+async function acceptTeamInvite(env,body) {
+  const {token,password}=body;
+  if (typeof token!=="string" || !teamTokenPattern.test(token) ||
+      typeof password!=="string" || password.length<12 || password.length>128) return fail("Convite ou palavra-passe inválidos.");
+  const db=env.DB;
+  const inviteHash=await digest(token);
+  if (!await query(db,"SELECT id FROM team_accounts WHERE invite_hash=? AND invite_expires>?",inviteHash,epoch()).first()) {
+    return fail("O convite expirou ou já foi utilizado. Pede um novo à gestão.",410);
+  }
+  const salt=random(24);
+  const hash=await passwordHash(password,salt);
+  const account=await query(db,`UPDATE team_accounts SET salt=?,password_hash=?,invite_hash=NULL,invite_expires=NULL
+    WHERE invite_hash=? AND invite_expires>? RETURNING *`,salt,hash,inviteHash,epoch()).first();
+  return account ? enterTeam(env,account) : fail("O convite expirou ou já foi utilizado. Pede um novo à gestão.",410);
+}
+
+async function issueTeamInvite(db,body,viewer) {
+  const username=typeof body.username==="string"?body.username.trim().toLowerCase():"";
+  if (!/^[a-z0-9][a-z0-9._-]{2,31}$/.test(username)) return fail("Escolhe um nome de utilizador válido.");
+  const token=random(32);
+  const hash=await digest(token);
+  const expires=epoch()+86400;
+  if (body.action==="reinvite") {
+    const target=await query(db,"SELECT id,role FROM team_accounts WHERE username=?",username).first();
+    if (!target||target.role==="dev"||(target.role==="master"&&viewer.role!=="dev")) return fail("Conta indisponível.",404);
+    const [updated]=await db.batch([
+      query(db,`UPDATE team_accounts SET invite_hash=?,invite_expires=?,password_hash=''
+        WHERE id=? RETURNING id`,hash,expires,target.id),
+      query(db,"DELETE FROM team_sessions WHERE account=?",target.id),
+      query(db,"DELETE FROM team_challenges WHERE account=?",target.id)
+    ]);
+    return updated.results.length?json({token,expires}):fail("Conta indisponível.",404);
+  }
+  const role=body.role;
+  if ((role!=="master"&&role!=="barber")||(role==="master"&&viewer.role!=="dev")||
+      (role==="barber"&&!barberById.has(body.barber))) return fail("Escolhe um perfil válido.",403);
+  const row=await query(db,`INSERT INTO team_accounts (id,username,role,barber,salt,password_hash,invite_hash,invite_expires)
+    VALUES (?,?,?,?,'','',?,?) ON CONFLICT DO NOTHING RETURNING id`,
+    crypto.randomUUID(),username,role,role==="barber"?body.barber:null,hash,expires).first();
+  return row?json({token,expires},201):fail("O utilizador ou perfil já tem uma conta.",409);
 }
 
 async function teamAuth(request,env,url) {
@@ -102,43 +152,34 @@ async function teamAuth(request,env,url) {
     if(token) await query(db,"DELETE FROM team_sessions WHERE token_hash=?",await digest(token)).run();
     return teamResponse({ok:true},makeCookie("",0));
   }
-  if(method==="POST"&&pathname==="/api/team/login") return attemptLogin(request,db,credentials(await request.json()||{}));
+  if(method==="POST"&&pathname==="/api/team/login") return attemptLogin(request,env,credentials(await request.json()||{}));
+  if(method==="POST"&&pathname==="/api/team/activate") return acceptTeamInvite(env,await request.json()||{});
+  if(method==="POST"&&pathname==="/api/team/mfa") return verifyTeamMfa(env,await request.json()||{});
   if(method==="POST"&&pathname==="/api/team/setup") {
     if(!await setupAllowed(request,env)) return fail("Configuração indisponível.",403);
     const data=credentials(await request.json()||{});
     if(!data) return fail("Usa um utilizador válido e uma palavra-passe com pelo menos 12 caracteres.");
     const account=await createTeamAccount(db,data,"dev");
-    return account?startTeamSession(db,account):fail("A conta de desenvolvimento já existe.",409);
+    return account?enterTeam(env,account):fail("A conta de desenvolvimento já existe.",409);
   }
   if(pathname!=="/api/team/accounts") return fail("Página indisponível.",404);
   const viewer=await sessionAccount(request,db);
   if(!viewer||viewer.role==="barber") return fail("Acesso reservado à gestão.",403);
   if(method==="GET") {
-    const result=await query(db,"SELECT username,role,barber FROM team_accounts ORDER BY role,username").all();
+    const result=await query(db,"SELECT username,role,barber,invite_expires FROM team_accounts ORDER BY role,username").all();
     return json({accounts:result.results});
   }
   if(method!=="POST") return fail("Operação inválida.",405);
   const body=await request.json()||{};
-  const data=credentials(body);
-  if(body.action==="remove"||body.action==="reset") {
+  if(body.action==="remove") {
     const target=await query(db,"SELECT id,role FROM team_accounts WHERE username=?",String(body.username)).first();
     if(!target||target.role==="dev"||(target.role==="master"&&viewer.role!=="dev")) return fail("Conta indisponível.",404);
-    if(body.action==="remove") {
-      await db.batch([query(db,"DELETE FROM team_sessions WHERE account=?",target.id),
-        query(db,"DELETE FROM team_accounts WHERE id=?",target.id)]);
-    } else {
-      if(!data) return fail("A palavra-passe deve ter entre 12 e 128 caracteres.");
-      const salt=random(24);
-      await db.batch([query(db,"UPDATE team_accounts SET salt=?,password_hash=? WHERE id=?",
-        salt,await passwordHash(data.password,salt),target.id),
-        query(db,"DELETE FROM team_sessions WHERE account=?",target.id)]);
-    }
+    await db.batch([
+      query(db,"DELETE FROM team_sessions WHERE account=?",target.id),
+      query(db,"DELETE FROM team_challenges WHERE account=?",target.id),
+      query(db,"DELETE FROM team_accounts WHERE id=?",target.id)
+    ]);
     return json({ok:true});
   }
-  if(!data) return fail("Usa um utilizador válido e uma palavra-passe com pelo menos 12 caracteres.");
-  const role=body.role;
-  if((role!=="master"&&role!=="barber")||(role==="master"&&viewer.role!=="dev")||
-     (role==="barber"&&!barberById.has(body.barber))) return fail("Escolhe um perfil válido.",403);
-  const result=await createTeamAccount(db,data,role,role==="barber"?body.barber:null);
-  return result?json({account:accountView(result)},201):fail("O utilizador ou perfil já tem uma conta.",409);
+  return body.action==="invite"||body.action==="reinvite" ? issueTeamInvite(db,body,viewer) : fail("Operação inválida.");
 }

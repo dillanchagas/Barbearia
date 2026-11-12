@@ -12,6 +12,27 @@
     <label>Palavra-passe <input name="password" type="password" autocomplete="current-password" required maxlength="128"></label>
     <button class="button" type="submit">Entrar ↗</button>
   </form>
+  <form id="team-activate" class="team-box" hidden>
+    <h3>Ativar acesso à equipa</h3>
+    <label>Nova palavra-passe <input name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="128"></label>
+    <button class="button" type="submit">Ativar acesso ↗</button>
+  </form>
+  <form id="team-mfa" class="team-box" hidden>
+    <h3>Autenticação de dois fatores</h3>
+    <div id="mfa-enrollment" hidden>
+      <p>Na tua aplicação de autenticação, adiciona uma conta PEK Barbeiro por chave de configuração e escolhe a opção baseada no tempo.</p>
+      <label>Chave de configuração <input id="mfa-setup-key" readonly autocomplete="off"></label>
+    </div>
+    <label>Código da aplicação ou de recuperação <input name="code" autocomplete="one-time-code" required maxlength="32" autocapitalize="none" spellcheck="false"></label>
+    <button class="button" type="submit">Validar código ↗</button>
+    <button class="choice" id="mfa-back" type="button">Voltar ao login</button>
+  </form>
+  <div id="team-recovery" class="team-box" hidden>
+    <h3>Código de recuperação</h3>
+    <p>Guarda este código num local seguro. Se perderes acesso à aplicação, podes usá-lo uma vez após a palavra-passe.</p>
+    <label>Código <input id="recovery-code" readonly autocomplete="off"></label>
+    <button class="button" id="recovery-done" type="button">Guardei o código</button>
+  </div>
   <form id="team-setup" class="team-box" hidden>
     <h3>Criar conta de desenvolvimento</h3>
     <p>Configuração inicial reservada ao proprietário do site.</p>
@@ -46,14 +67,19 @@
     <p id="accounts-status" role="status"></p>
     <div id="accounts-list"></div>
     <form id="accounts-form" class="team-box">
-      <h3 id="accounts-title">Criar conta</h3>
+      <h3>Criar convite</h3>
       <label>Perfil <select name="role" id="account-role"></select></label>
       <label id="account-barber-label">Barbeiro <select name="barber" id="account-barber"></select></label>
       <label>Utilizador <input name="username" autocomplete="off" required minlength="3" maxlength="32" pattern="[a-zA-Z0-9][a-zA-Z0-9._\-]{2,31}"></label>
-      <label>Palavra-passe <input name="password" type="password" autocomplete="new-password" required minlength="12" maxlength="128"></label>
-      <button class="button" id="account-save" type="submit">Criar conta</button>
-      <button class="choice" id="account-reset-back" type="button" hidden>Voltar</button>
+      <button class="button" id="account-save" type="submit">Criar convite</button>
     </form>
+    <div id="team-invite" class="team-box" hidden>
+      <h3>Convite individual</h3>
+      <p id="team-invite-note"></p>
+      <label>Ligação de ativação <input id="team-invite-url" readonly autocomplete="off"></label>
+      <button class="choice" id="team-invite-copy" type="button">Copiar ligação</button>
+      <button class="choice" id="team-invite-close" type="button">Fechar</button>
+    </div>
   </section>
 </main><script type="module" src="/staff.js"></script></body>
 </html>

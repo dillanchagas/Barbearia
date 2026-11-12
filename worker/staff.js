@@ -8,13 +8,18 @@ const weekday = $("#weekday");
 const hours = $("#hours-form");
 const login = $("#team-login");
 const setup = $("#team-setup");
+const activate = $("#team-activate");
+const mfa = $("#team-mfa");
+const recovery = $("#team-recovery");
+const inviteBox = $("#team-invite");
 const management = $("#team-management");
 const accountsForm = $("#accounts-form");
 const accountRole = $("#account-role");
 const accountsStatus = $("#accounts-status");
 const roleNames = {dev:"Desenvolvimento",master:"Master",barber:"Barbeiro"};
 const days = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
-let catalog, agenda, viewer, resetTarget, revision=0, busy=false;
+let catalog, agenda, viewer, challenge, revision=0, busy=false;
+let inviteToken=new URLSearchParams(location.hash.slice(1)).get("convite");
 const time = n => [Math.floor(n/60),n%60].map(x=>String(x).padStart(2,"0")).join(":");
 const minutes = text => text ? text.split(":").reduce((a,b)=>a*60+Number(b),0) : null;
 
@@ -111,18 +116,45 @@ hours.onsubmit = event => {
 barber.onchange = date.onchange = () => {if(date.value) load();};
 weekday.onchange = showHours;
 
-function accountEditor(target=null) {
-  resetTarget=target;
+function accountEditor() {
   accountsForm.reset();
-  const username=accountsForm.elements.username;
-  username.value=target?.username||"";
-  username.readOnly=!!target;
-  accountRole.closest("label").hidden=!!target;
-  $("#account-barber-label").hidden=!!target||accountRole.value==="master";
-  $("#accounts-title").textContent=target?"Alterar palavra-passe de "+target.username:"Criar conta";
-  $("#account-save").textContent=target?"Guardar palavra-passe":"Criar conta";
-  $("#account-reset-back").hidden=!target;
-  if(target) accountsForm.elements.password.focus();
+  $("#account-barber-label").hidden=accountRole.value==="master";
+}
+
+function showInvite(result,username) {
+  const link=new URL("/equipa",location.origin);
+  link.hash=new URLSearchParams({convite:result.token});
+  $("#team-invite-url").value=link.href;
+  $("#team-invite-note").textContent="Partilha em privado com "+username+". O convite vale 24 horas e pode ser usado uma vez.";
+  inviteBox.hidden=false;
+  $("#team-invite-url").focus();
+  $("#team-invite-url").select();
+}
+
+function closeInvite() {
+  inviteBox.hidden=true;
+  $("#team-invite-url").value="";
+}
+
+$("#team-invite-close").onclick=closeInvite;
+$("#team-invite-copy").onclick=async()=>{
+  const input=$("#team-invite-url");
+  try {
+    await navigator.clipboard.writeText(input.value);
+    accountsStatus.textContent="Ligação copiada.";
+  } catch {
+    input.select();
+    accountsStatus.textContent="Copia a ligação selecionada.";
+  }
+};
+
+async function resendInvite(account) {
+  if (!window.confirm("Gerar um novo convite para "+account.username+"? O acesso atual será revogado.")) return;
+  try {
+    const result=await api("/api/team/accounts",{action:"reinvite",username:account.username});
+    showInvite(result,account.username);
+    await listAccounts();
+  } catch(error){accountsStatus.textContent=error.message;}
 }
 
 async function listAccounts() {
@@ -135,16 +167,17 @@ async function listAccounts() {
       const label=roleNames[account.role];
       const person=catalog.barbers.find(x=>x.id===account.barber)?.name;
       row.append(make("strong",account.username),make("span",person?label+" · "+person:label));
+      if(account.invite_expires) row.append(make("small",account.invite_expires*1000>Date.now()?"Convite pendente":"Convite expirado"));
       if(account.role==="barber"||(account.role==="master"&&viewer.role==="dev")) {
         const actions=make("div","",{className:"agenda-actions"});
-        const reset=make("button","Alterar palavra-passe",{type:"button",className:"choice"});
-        reset.onclick=()=>accountEditor(account);
+        const reset=make("button","Gerar novo convite",{type:"button",className:"choice"});
+        reset.onclick=()=>resendInvite(account);
         const remove=make("button","Remover acesso",{type:"button",className:"choice"});
         remove.onclick=async()=>{
           if(!window.confirm("Remover o acesso de "+account.username+"?"))return;
           try {
             await api("/api/team/accounts",{action:"remove",username:account.username});
-            accountEditor();
+            closeInvite();
             await listAccounts();
             accountsStatus.textContent="Acesso removido.";
           } catch(error){accountsStatus.textContent=error.message;}
@@ -158,7 +191,6 @@ async function listAccounts() {
 }
 
 accountRole.onchange=()=>{$("#account-barber-label").hidden=accountRole.value==="master";};
-$("#account-reset-back").onclick=()=>accountEditor();
 accountsForm.onsubmit=async event=>{
   event.preventDefault();
   const data=Object.fromEntries(new FormData(accountsForm));
@@ -166,8 +198,9 @@ accountsForm.onsubmit=async event=>{
   button.disabled=true;
   accountsStatus.textContent="A guardar…";
   try {
-    await api("/api/team/accounts",{...data,action:resetTarget?"reset":"create"});
-    accountsStatus.textContent=resetTarget?"Palavra-passe atualizada.":"Conta criada.";
+    const result=await api("/api/team/accounts",{...data,action:"invite"});
+    accountsStatus.textContent="Convite criado.";
+    showInvite(result,data.username.trim().toLowerCase());
     accountEditor();
     await listAccounts();
   } catch(error){accountsStatus.textContent=error.message;}
@@ -176,7 +209,7 @@ accountsForm.onsubmit=async event=>{
 
 async function showAccount(account) {
   viewer=account;
-  login.hidden=setup.hidden=true;
+  login.hidden=setup.hidden=activate.hidden=mfa.hidden=recovery.hidden=true;
   $("#team-session").hidden=false;
   $("#team-user").textContent=account.username+" · "+roleNames[account.role];
   catalog ||= await api("/api/catalog");
@@ -204,10 +237,19 @@ async function session() {
   revision++;
   viewer=null;
   panel.hidden=management.hidden=$("#team-session").hidden=true;
+  login.hidden=setup.hidden=activate.hidden=mfa.hidden=recovery.hidden=true;
+  challenge=null;
+  $("#mfa-setup-key").value=$("#recovery-code").value="";
+  closeInvite();
   $("#agenda-entries").replaceChildren();
   $("#accounts-list").replaceChildren();
   status.textContent="A verificar acesso…";
   try {
+    if (inviteToken) {
+      activate.hidden=false;
+      status.textContent="";
+      return;
+    }
     const result=await api("/api/team/session");
     if(result.account) await showAccount(result.account);
     else {
@@ -218,16 +260,49 @@ async function session() {
   } catch(error){status.textContent=error.message;}
 }
 
-for(const [form,action] of [[login,"login"],[setup,"setup"]]) {
+async function handleAccess(result) {
+  login.hidden=setup.hidden=activate.hidden=mfa.hidden=recovery.hidden=true;
+  status.textContent="";
+  if(result.mfa) {
+    challenge=result.challenge;
+    $("#mfa-setup-key").value=result.setupKey||"";
+    $("#mfa-enrollment").hidden=!result.setupKey;
+    mfa.hidden=false;
+    mfa.elements.code.focus();
+    return;
+  }
+  challenge=null;
+  $("#mfa-setup-key").value="";
+  if(result.recoveryCode) {
+    $("#recovery-code").value=result.recoveryCode;
+    recovery.hidden=false;
+    $("#recovery-done").onclick=()=>{
+      $("#recovery-code").value="";
+      return showAccount(result.account);
+    };
+    return;
+  }
+  await showAccount(result.account);
+}
+
+$("#mfa-back").onclick=()=>session();
+for(const [form,action] of [[login,"login"],[setup,"setup"],[activate,"activate"],[mfa,"mfa"]]) {
   form.onsubmit=async event=>{
     event.preventDefault();
     const button=form.querySelector("button");
     button.disabled=true;
     status.textContent="A validar o acesso…";
     try {
-      const {account}=await api("/api/team/"+action,Object.fromEntries(new FormData(form)));
+      const data=Object.fromEntries(new FormData(form));
+      if(action==="activate") data.token=inviteToken;
+      if(action==="mfa") data.challenge=challenge;
+      const result=await api("/api/team/"+action,data);
+      if(action==="activate") {
+        inviteToken=null;
+        history.replaceState(null,"",location.pathname);
+      }
       form.reset();
-      await showAccount(account);
+      await handleAccess(result);
     } catch(error){status.textContent=error.message;}
     finally{button.disabled=false;}
   };
