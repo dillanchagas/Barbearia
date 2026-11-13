@@ -153,7 +153,7 @@ async function agenda(env, url, method, body, viewer) {
   if (method === "GET") {
     const day = url.searchParams.get("day");
     if (!validDay(day)) return fail("Escolhe uma data válida.");
-    const entriesQuery = query(db, "SELECT id, starts, ends, service, name, email, status, email_sent FROM appointments WHERE barber = ? AND day = ? ORDER BY starts", barber, day);
+    const entriesQuery = query(db, "SELECT id, starts, ends, service, name, email, status, email_sent, completed_at FROM appointments WHERE barber = ? AND day = ? ORDER BY starts", barber, day);
     if (viewer.role === "barber") return json({entries:(await entriesQuery.all()).results.filter(row=>row.service)});
     const [entries, hours] = await db.batch([
       entriesQuery,
@@ -183,8 +183,19 @@ async function agenda(env, url, method, body, viewer) {
       crypto.randomUUID(), barber, day, start, end, barber, day, end, start).first();
     return blocked ? json({ ok: true }) : fail("Já existe uma marcação ou bloqueio nesse período.", 409);
   }
+  if (body.action === "complete") {
+    const item = await query(db,"SELECT service FROM appointments WHERE id=? AND barber=?",String(body.id),barber).first();
+    const service = serviceById.get(item?.service);
+    if (!service) return fail("Marcação indisponível.",404);
+    const now = localNow();
+    const completed = await query(db,`UPDATE appointments SET completed_at=CURRENT_TIMESTAMP, completed_cents=?
+      WHERE id=? AND barber=? AND status='booked' AND completed_at IS NULL
+      AND (day<? OR (day=? AND ends<=?)) RETURNING id`,
+      service.price*100,String(body.id),barber,now.day,now.day,now.minute).first();
+    return completed ? json({ok:true}) : fail("Só podes concluir uma marcação terminada e ativa.",409);
+  }
   if (body.action === "cancel") {
-    const row = await query(db, "UPDATE appointments SET status='cancelled' WHERE id=? AND barber=? AND status!='cancelled' RETURNING id",
+    const row = await query(db, "UPDATE appointments SET status='cancelled' WHERE id=? AND barber=? AND status!='cancelled' AND completed_at IS NULL RETURNING id",
       String(body.id), barber).first();
     return row ? json({ ok: true }) : fail("Registo indisponível.", 404);
   }
@@ -194,6 +205,44 @@ async function agenda(env, url, method, body, viewer) {
     return row && await sendConfirmation(env, row) ? json({ ok: true }) : fail("Não foi possível enviar o e-mail.", 503);
   }
   return fail("Operação inválida.");
+}
+
+async function operations(request,env,url) {
+  const db=env.DB;
+  const viewer=await sessionAccount(request,db);
+  if (!viewer || viewer.role==="barber") return fail("Acesso reservado à gestão.",403);
+  if (request.method==="POST") {
+    const {email}=await request.json()||{};
+    if (typeof email!=="string" || email.length>254) return fail("Cliente inválido.");
+    const redeemed=await query(db,`INSERT INTO loyalty_rewards (id,email)
+      SELECT ?,? WHERE
+      (SELECT COUNT(*) FROM appointments WHERE email=? AND completed_at IS NOT NULL) >=
+      10 * (1 + (SELECT COUNT(*) FROM loyalty_rewards WHERE email=?)) RETURNING id`,
+      crypto.randomUUID(),email,email,email).first();
+    return redeemed?json({ok:true}):fail("Este cliente ainda não tem uma recompensa disponível.",409);
+  }
+  if (request.method!=="GET") return fail("Operação inválida.",405);
+  const month=url.searchParams.get("month")||"";
+  const from=month+"-01";
+  if (!/^\d{4}-\d{2}$/.test(month)||!validDay(from)||month.startsWith("9999")) return fail("Mês inválido.");
+  const next=new Date(from);
+  next.setUTCMonth(next.getUTCMonth()+1);
+  const search=(url.searchParams.get("search")||"").trim().slice(0,100).toLowerCase();
+  const [stats,clients]=await db.batch([
+    query(db,`SELECT barber, COUNT(*) AS total, SUM(status='cancelled') AS cancelled,
+      SUM(completed_at IS NOT NULL) AS completed, COALESCE(SUM(completed_cents),0) AS cents
+      FROM appointments WHERE day>=? AND day<? AND service IS NOT NULL GROUP BY barber`,from,next.toISOString().slice(0,10)),
+    query(db,`WITH summary AS (
+      SELECT email, COUNT(*) AS total, SUM(completed_at IS NOT NULL) AS completed, MAX(day) AS last_day
+      FROM appointments WHERE email IS NOT NULL AND status='booked' GROUP BY email
+    )
+    SELECT summary.*, a.name, (SELECT COUNT(*) FROM loyalty_rewards r WHERE r.email=summary.email) AS rewards
+    FROM summary JOIN appointments a ON a.id=(SELECT id FROM appointments
+      WHERE email=summary.email AND status='booked' ORDER BY day DESC, starts DESC, id DESC LIMIT 1)
+    WHERE instr(lower(a.name),?)>0 OR instr(lower(summary.email),?)>0
+    ORDER BY last_day DESC, email LIMIT 50`,search,search)
+  ]);
+  return json({stats:stats.results,clients:clients.results});
 }
 
 export default {
@@ -220,6 +269,7 @@ export default {
       if (pathname === "/api/availability" && method === "GET") return await availability(env.DB, url);
       if (pathname === "/api/book" && method === "POST") return await book(env, await request.json() || {});
       if (pathname.startsWith("/api/team/")) return await teamAuth(request,env,url);
+      if (pathname === "/api/operations") return await operations(request,env,url);
       if (pathname === "/api/staff" && (method === "GET" || method === "POST")) {
         const viewer = await sessionAccount(request,env.DB);
         if (!viewer) return fail("Entra com a tua conta da equipa.",401);

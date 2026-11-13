@@ -13,6 +13,9 @@ const mfa = $("#team-mfa");
 const recovery = $("#team-recovery");
 const inviteBox = $("#team-invite");
 const management = $("#team-management");
+const operationsPanel = $("#operations");
+const operationsForm = $("#operations-filter");
+const euros = new Intl.NumberFormat("pt-PT",{style:"currency",currency:"EUR"});
 const accountsForm = $("#accounts-form");
 const accountRole = $("#account-role");
 const accountsStatus = $("#accounts-status");
@@ -47,6 +50,7 @@ async function mutate(body) {
   try {
     await api("/api/staff",{barber:barber.value,...body});
     await load("Alteração guardada.");
+    if (body.action==="complete") await loadOperations();
   } catch (error) {status.textContent = error.message;}
   finally {busy = false;}
 }
@@ -61,16 +65,23 @@ function showEntries() {
     const details = make("div","");
     details.append(make("strong",time(row.starts)+"–"+time(row.ends)+" · "+(service?.name||"Bloqueio")));
     if (row.name) details.append(make("p",row.name+" · "+row.email));
-    details.append(make("small",row.status==="cancelled" ? "Cancelado" : row.status==="blocked" ?
+    details.append(make("small",row.completed_at ? "Concluído" : row.status==="cancelled" ? "Cancelado" : row.status==="blocked" ?
       "Bloqueado" : row.email_sent ? "E-mail enviado" : "Confirmação por e-mail pendente"));
     entry.append(details);
-    if (viewer.role!=="barber"&&row.status!=="cancelled") {
+    if (viewer.role!=="barber"&&row.status!=="cancelled"&&!row.completed_at) {
       const actions = make("div","",{className:"agenda-actions"});
       const cancel = make("button",row.status==="blocked" ? "Desbloquear" : "Cancelar",{type:"button",className:"choice"});
       cancel.onclick = () => {
         if (window.confirm(row.status==="blocked" ? "Retirar este bloqueio?" : "Cancelar esta marcação?")) mutate({action:"cancel",id:row.id});
       };
       actions.append(cancel);
+      if (row.status==="booked"&&(date.value<catalog.day||(date.value===catalog.day&&row.ends<=catalog.minute))) {
+        const complete=make("button","Concluir serviço",{type:"button",className:"choice"});
+        complete.onclick=()=>{
+          if(window.confirm("Registar este serviço como concluído?")) mutate({action:"complete",id:row.id});
+        };
+        actions.append(complete);
+      }
       if (row.status==="booked"&&!row.email_sent&&agenda.emailConfigured) {
         const retry = make("button","Enviar confirmação",{type:"button",className:"choice"});
         retry.onclick=()=>mutate({action:"email",id:row.id});
@@ -207,6 +218,52 @@ accountsForm.onsubmit=async event=>{
   finally{button.disabled=false;}
 };
 
+let operationsRequest=0;
+async function loadOperations(message="") {
+  const current=++operationsRequest;
+  const notice=$("#operations-status");
+  notice.textContent="A consultar…";
+  try {
+    const filters=new URLSearchParams(new FormData(operationsForm));
+    const {stats,clients}=await api("/api/operations?"+filters);
+    if(current!==operationsRequest||operationsPanel.hidden) return;
+    $("#operations-stats").replaceChildren(...catalog.barbers.map(person=>{
+      const row=stats.find(x=>x.barber===person.id);
+      const card=make("article","");
+      card.append(make("h3",person.name),make("p",(row?.total||0)+" marcações · "+(row?.completed||0)+
+        " concluídas · "+(row?.cancelled||0)+" canceladas"),make("p",euros.format((row?.cents||0)/100)+" em serviços concluídos"));
+      return card;
+    }));
+    const list=$("#operations-clients");
+    list.replaceChildren();
+    if(!clients.length) list.append(make("p","Sem clientes para esta pesquisa."));
+    for(const client of clients) {
+      const row=make("article","",{className:"team-account"});
+      const available=Math.floor(client.completed/10)-client.rewards;
+      row.append(make("strong",client.name),make("span",client.email),make("span",
+        client.total+" marcações · "+client.completed+" concluídas · "+available+" recompensas disponíveis"),
+        make("small","Última marcação em "+client.last_day));
+      if(available>0) {
+        const redeem=make("button","Registar resgate",{type:"button",className:"choice"});
+        redeem.onclick=async()=>{
+          if(!window.confirm("Registar a utilização de uma recompensa?")) return;
+          redeem.disabled=true;
+          try {
+            await api("/api/operations",{email:client.email});
+            await loadOperations("Recompensa utilizada.");
+          } catch(error){notice.textContent=error.message;redeem.disabled=false;}
+        };
+        row.append(redeem);
+      }
+      list.append(row);
+    }
+    notice.textContent=message;
+  } catch(error) {
+    if(current===operationsRequest) notice.textContent=error.message;
+  }
+}
+operationsForm.onsubmit=event=>{event.preventDefault();loadOperations();};
+
 async function showAccount(account) {
   viewer=account;
   login.hidden=setup.hidden=activate.hidden=mfa.hidden=recovery.hidden=true;
@@ -222,7 +279,10 @@ async function showAccount(account) {
   weekday.value=new Date(catalog.day).getUTCDay();
   $("#agenda-tools").hidden=!managers;
   management.hidden=!managers;
+  operationsPanel.hidden=!managers;
   if(managers) {
+    operationsForm.elements.month.value=catalog.day.slice(0,7);
+    loadOperations();
     const roles=account.role==="dev"?["barber","master"]:["barber"];
     accountRole.replaceChildren(...roles.map(x=>make("option",roleNames[x],{value:x})));
     $("#account-barber").replaceChildren(...catalog.barbers.map(x=>make("option",x.name,{value:x.id})));
@@ -236,6 +296,10 @@ async function showAccount(account) {
 async function session() {
   revision++;
   viewer=null;
+  operationsRequest++;
+  operationsPanel.hidden=true;
+  $("#operations-clients").replaceChildren();
+  $("#operations-stats").replaceChildren();
   panel.hidden=management.hidden=$("#team-session").hidden=true;
   login.hidden=setup.hidden=activate.hidden=mfa.hidden=recovery.hidden=true;
   challenge=null;

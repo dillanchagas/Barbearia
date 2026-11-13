@@ -62,6 +62,19 @@
       </form>
     </div>
   </div>
+  <section id="operations" class="team-management" hidden>
+    <h2>Estatísticas e clientes</h2>
+    <form id="operations-filter" class="agenda-filters">
+      <label>Mês das estatísticas <input name="month" type="month" required></label>
+      <label>Pesquisar clientes <input name="search" type="search" maxlength="100" placeholder="Nome ou e-mail"></label>
+      <div><button class="choice" type="submit">Consultar</button></div>
+    </form>
+    <p id="operations-status" role="status"></p>
+    <div id="operations-stats" class="menu"></div>
+    <h3>Histórico e fidelização</h3>
+    <p>Uma recompensa por cada 10 serviços concluídos. O conteúdo da recompensa é definido pela barbearia.</p>
+    <div id="operations-clients"></div>
+  </section>
   <section id="team-management" class="team-management" hidden>
     <h2>Contas da equipa</h2>
     <p id="accounts-status" role="status"></p>
