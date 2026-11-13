@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="PEK Barbeiro em Algueirão–Mem Martins. Consulta os serviços e marca o teu próximo corte online.">
+<meta name="theme-color" content="#0c0b09">
+<title>PEK Barbeiro — Algueirão–Mem Martins</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap nav">
+    <a class="brand" href="./" aria-label="PEK Barbeiro, início"><strong>PEK</strong><small>BARBEIRO</small></a>
+    <nav aria-label="Menu principal"><a href="#servicos">Serviços</a><a href="#localizacao">Localização</a><a href="https://www.instagram.com/pek.barbeiro/" target="_blank" rel="noopener noreferrer">Instagram ↗</a></nav>
+    <a class="button small" href="#marcacao">Marcar agora <span aria-hidden="true">↗</span></a>
+  </div>
+</header>
+<main>
+  <section class="hero" aria-labelledby="titulo">
+    <div class="wrap hero-inner"><div class="hero-copy">
+      <p class="eyebrow"><span></span> Algueirão–Mem Martins</p>
+      <h1 id="titulo">Transformando<br>seu estilo <em>em arte</em></h1>
+      <p class="intro">Do degradê à barba com toalha quente. Escolhe o serviço, o teu barbeiro e a hora que te dá mais jeito.</p>
+      <div class="actions"><a class="button" href="#marcacao">Marcar agora <span aria-hidden="true">↗</span></a><a class="plain" href="#servicos">Ver serviços <span aria-hidden="true">↓</span></a></div>
+      </div>
+      <img class="hero-image" src="./pek-logo.png" alt="Logótipo PEK Barbeiro em preto, dourado e branco" width="1254" height="1254" fetchpriority="high">
+    </div>
+  </section>
+  
+  <section id="servicos" class="section wrap">
+    <div class="section-heading"><div><p class="eyebrow"><span></span> Tabela de preços</p><h2>Serviços</h2></div></div>
+    <div class="menu">
+      <article><h3>Cabelo</h3><dl><div><dt><a href="#marcacao" data-service="degrade">Corte degradê</a></dt><dd>14 €</dd></div><div><dt><a href="#marcacao" data-service="tradicional">Corte tradicional</a></dt><dd>12 €</dd></div><div><dt><a href="#marcacao" data-service="maquina">Corte à máquina</a></dt><dd>9 €</dd></div><div><dt><a href="#marcacao" data-service="infantil">Corte infantil</a></dt><dd>11 €</dd></div></dl></article>
+      <article><h3>Barba e detalhes</h3><dl><div><dt><a href="#marcacao" data-service="barba">Barba completa ou à máquina</a></dt><dd>10 €</dd></div><div><dt><a href="#marcacao" data-service="sobrancelha">Sobrancelha à lâmina</a></dt><dd>5 €</dd></div><div><dt><a href="#marcacao" data-service="contornos">Contornos do cabelo</a></dt><dd>5 €</dd></div><div><dt><a href="#marcacao" data-service="mascara">Máscara negra</a></dt><dd>10 €</dd></div></dl></article>
+      <article><h3>Combos</h3><dl><div><dt><a href="#marcacao" data-service="cabelo-barba">Cabelo e barba</a></dt><dd>20 €</dd></div><div><dt><a href="#marcacao" data-service="cabelo-sobrancelha">Cabelo e sobrancelha</a></dt><dd>15 €</dd></div><div><dt><a href="#marcacao" data-service="cabelo-barba-sobrancelha">Cabelo, barba e sobrancelha</a></dt><dd>22 €</dd></div><div><dt><a href="#marcacao" data-service="barba-sobrancelha">Barba e sobrancelha</a></dt><dd>12 €</dd></div></dl></article>
+    </div>
+    <details class="extras">
+      <summary>Ver mais combos</summary>
+      <dl>
+        <div><dt><a href="#marcacao" data-service="cabelo-barba-mascara">Cabelo, barba e máscara negra</a></dt><dd>28 €</dd></div>
+        <div><dt><a href="#marcacao" data-service="completo">Cabelo, barba, sobrancelha e máscara negra</a></dt><dd>30 €</dd></div>
+        <div><dt><a href="#marcacao" data-service="cabelo-mascara">Cabelo e máscara negra</a></dt><dd>20 €</dd></div>
+        <div><dt><a href="#marcacao" data-service="maquina-combo">Cabelo e barba à máquina, sem degradê</a></dt><dd>16 €</dd></div>
+        <div><dt><a href="#marcacao" data-service="cabelo-sobrancelha-mascara">Cabelo, sobrancelha e máscara negra</a></dt><dd>25 €</dd></div>
+      </dl>
+    </details>
+  </section>
+  <section class="booking" id="marcacao">
+    <div class="wrap booking-inner">
+      <div class="booking-intro"><p class="eyebrow"><span></span> Marcações online</p><h2>Reserva a tua cadeira.</h2><p>Escolhe o serviço, o teu barbeiro e a hora que te dá mais jeito.</p><p class="form-note">Demonstração com horários fictícios.</p></div>
+      <div class="booking-panel">
+        <form id="booking-form" hidden>
+          <ol id="booking-steps" aria-label="Etapas da marcação"><li>Serviço</li><li>Barbeiro</li><li>Data e hora</li><li>Dados</li></ol>
+          <fieldset><legend tabindex="-1">Escolhe o serviço</legend>
+            <label for="service">Serviço</label><select id="service" required><option value="">Seleciona um serviço</option></select>
+            <button type="button" class="button" id="service-next">Continuar ↗</button>
+          </fieldset>
+          <fieldset hidden disabled><legend tabindex="-1">Escolhe o teu barbeiro</legend>
+            <div id="barber-list" class="choice-list"></div><button type="button" class="text-button" data-back="0">← Serviço</button>
+          </fieldset>
+          <fieldset hidden disabled><legend tabindex="-1">Escolhe o dia e a hora</legend>
+            <div class="calendar-nav"><button type="button" class="choice" id="prev-month" aria-label="Mês anterior">←</button><strong id="month-label"></strong><button type="button" class="choice" id="next-month" aria-label="Mês seguinte">→</button></div>
+            <div id="calendar" class="calendar"></div>
+            <p id="hours-heading" tabindex="-1"></p><div id="time-list" class="time-list"></div>
+            <button type="button" class="text-button" data-back="1">← Barbeiros</button>
+          </fieldset>
+          <fieldset hidden disabled><legend tabindex="-1">Os teus dados</legend>
+            <p id="booking-summary"></p>
+            <label for="client-name">Nome</label><input id="client-name" autocomplete="off" value="Cliente de demonstração" readonly>
+            <label for="client-email">E-mail</label><input id="client-email" type="email" autocomplete="off" value="cliente@example.test" readonly>
+            <p class="form-note">Esta simulação usa dados fictícios.</p>
+            <button type="submit" class="button" id="booking-submit">Confirmar marcação ↗</button>
+            <button type="button" class="text-button" data-back="2">← Data e hora</button>
+          </fieldset>
+        </form>
+        <p id="booking-status" role="status">A carregar as marcações…</p>
+        <div id="booking-result" hidden><h3 id="receipt-title" tabindex="-1">Simulação concluída</h3>
+          <p id="receipt-summary"></p><p id="receipt-reference"></p><p id="receipt-email"></p>
+          <button type="button" class="button" id="booking-reset">Nova marcação</button>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section id="localizacao" class="section wrap visit">
+    <div><p class="eyebrow"><span></span> Visita-nos</p><h2>Onde estamos</h2><address>Estrada do Algueirão, 10<br>2725-019 Algueirão–Mem Martins</address></div>
+    <div class="contact"><a class="plain" href="https://www.google.com/maps/search/?api=1&amp;query=PEK+Barbeiro+Estrada+do+Algueir%C3%A3o+10" target="_blank" rel="noopener noreferrer">Como chegar ↗</a><a class="plain" href="tel:+351933454811">933 454 811 ↗</a><a class="plain" href="https://www.instagram.com/pek.barbeiro/" target="_blank" rel="noopener noreferrer">@pek.barbeiro ↗</a></div>
+  </section>
+</main>
+<footer>
+  <div class="wrap footer-inner">
+    <a class="brand" href="./" aria-label="PEK Barbeiro, início"><strong>PEK</strong><small>BARBEIRO</small></a>
+    <span>Algueirão–Mem Martins</span>
+    <a class="site-credit" href="https://jc-site.dillanchagas.workers.dev/#orcamento" target="_blank" rel="noopener noreferrer" aria-label="JC Web Solutions, pedir orçamento (abre num novo separador)">
+      <img src="./jc-web-solutions.png" width="2172" height="724" alt="JC Web Solutions" loading="lazy" decoding="async">
+    </a>
+  </div>
+</footer>
+<script type="module" src="./booking.js"></script></body>
+</html>

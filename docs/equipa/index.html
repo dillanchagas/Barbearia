@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex"><title>Agenda da equipa · PEK Barbeiro</title>
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<header class="top"><div class="wrap nav"><a class="brand" href="../" aria-label="PEK Barbeiro, início"><strong>PEK</strong><small>BARBEIRO</small></a><a class="plain" href="../">Ver site da PEK ↗</a></div></header>
+<main class="section wrap agenda">
+<p class="eyebrow"><span></span> Área da equipa</p>
+<h1>Agenda</h1>
+<p>Explore as agendas dos três barbeiros. Todas as marcações e alterações desta demonstração são fictícias.</p>
+<div class="agenda-filters">
+<label>Barbeiro <select id="barber"></select></label>
+<label>Dia <input id="day" type="date" required></label>
+</div>
+<p id="status" role="status"></p>
+<div id="agenda-entries"></div>
+<div class="agenda-tools">
+<form id="block"><h3>Bloquear período</h3><p>Testa um bloqueio na data selecionada.</p>
+<div class="agenda-filters">
+<label>Início <input name="start" type="time" step="900" required></label>
+<label>Fim <input name="end" type="time" step="900" required></label>
+</div><button class="button" type="submit">Bloquear</button></form>
+</div>
+</main>
+<script type="module" src="./agenda.js"></script>
+</body></html>
